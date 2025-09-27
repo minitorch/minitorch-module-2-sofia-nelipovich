@@ -221,10 +221,10 @@ class IsClose(Function):
 class Permute(Function):
     @staticmethod
     def forward(ctx: Context, a: Tensor, order: Tensor) -> Tensor:
-        # order — это тензор, превращаем в tuple для permute
-        # order_ = [int(order[i]) for i in range(order.size)]
-        ctx.save_for_backward(order)
-        a_new_shape = a._tensor.permute(*order)
+        # Получаем кортеж через внутреннюю storage:
+        order_tuple = tuple(int(v) for v in order._tensor._storage)
+        ctx.save_for_backward(order_tuple)
+        a_new_shape = a._tensor.permute(*order_tuple)
         return minitorch.Tensor.make(a_new_shape._storage, a_new_shape.shape, a_new_shape.strides, a.backend)
 
     @staticmethod
