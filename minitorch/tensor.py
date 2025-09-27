@@ -142,6 +142,11 @@ class Tensor:
             b._type_(self.backend)
             c = b
         return c
+    def __hash__(self):
+        return id(self)
+    
+    def __eq__(self, other):
+        return self is other
 
     # Functions
     def __add__(self, b: TensorLike) -> Tensor:

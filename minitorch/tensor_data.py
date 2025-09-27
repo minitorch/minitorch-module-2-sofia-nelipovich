@@ -42,9 +42,16 @@ def index_to_position(index: Index, strides: Strides) -> int:
     Returns:
         Position in storage
     """
+    # index_to_position переводит многомерный индекс в позицию в плоском storage с учетом strides
+    # Пример:
+    # index = (2,1), strides = (2,1) для shape (3,2)
+    # pos = index[0]*strides[0] + index[1]*strides[1] = 2*2 + 1*1 = 5
+    # элемент по адресу (2,1) лежит в storage[5]
 
-    # TODO: Implement for Task 2.1.
-    raise NotImplementedError("Need to implement for Task 2.1")
+    position = 0
+    for idx, stride in zip(index, strides):
+        position += idx * stride
+    return int(position)
 
 
 def to_index(ordinal: int, shape: Shape, out_index: OutIndex) -> None:
@@ -60,8 +67,15 @@ def to_index(ordinal: int, shape: Shape, out_index: OutIndex) -> None:
         out_index : return index corresponding to position.
 
     """
-    # TODO: Implement for Task 2.1.
-    raise NotImplementedError("Need to implement for Task 2.1")
+    # to_index переводит порядковый номер (ordinal) в многомерный индекс
+    # Пример для shape = (3,2):
+    # ordinal = 4
+    # index[1] = 4 % 2 = 0, 4 //= 2 -> 2
+    # index[0] = 2 % 3 = 2, 2 //= 3 -> 0
+    # Получаем индекс (2,0) — это 5-й (ordinal=4) элемент в порядковой нумерации по row-major разметке.
+    for i in reversed(range(len(shape))):
+        out_index[i] = ordinal % shape[i]
+        ordinal //= shape[i]
 
 
 def broadcast_index(
@@ -83,8 +97,34 @@ def broadcast_index(
     Returns:
         None
     """
-    # TODO: Implement for Task 2.2.
-    raise NotImplementedError("Need to implement for Task 2.2")
+    # broadcast_index преобразует многомерный индекс out_index (для большого тензора big_shape)
+    # к индексу меньшего тензора shape (по правилам broadcasting)
+    #
+    # Пример:
+    # Пусть big_shape = (3, 2, 5), shape = (2, 5)
+    # out_index = (2, 1, 4)
+    # offset = len(big_shape) - len(shape) = 1
+    #
+    # Для каждой размерности i в shape:
+    #   if shape[i] == 1:
+    #       out_index[i + offset] неважен, результат всегда 0 (broadcast по этой оси)
+    #   else:
+    #       out_index[i + offset] копируется в out_index для shape
+    #
+    # Результат:
+    # Для shape[0]=2: копируем big_index[1]=1 -> out_index[0]=1
+    # Для shape[1]=5: копируем big_index[2]=4 -> out_index[1]=4
+    #
+    # для out_index=(2,1,4), broadcasted индекс в меньшем shape будет (1, 4)
+    #
+    # Если shape имела бы единицу: shape = (1, 5), из big_index (2, 1, 4) получили бы (0, 4)
+
+    offset = len(big_shape) - len(shape)
+    for i in range(len(shape)):
+        if shape[i] == 1:
+            out_index[i] = 0
+        else:
+            out_index[i] = big_index[i + offset]
 
 
 def shape_broadcast(shape1: UserShape, shape2: UserShape) -> UserShape:
@@ -101,8 +141,50 @@ def shape_broadcast(shape1: UserShape, shape2: UserShape) -> UserShape:
     Raises:
         IndexingError : if cannot broadcast
     """
-    # TODO: Implement for Task 2.2.
-    raise NotImplementedError("Need to implement for Task 2.2")
+    # shape_broadcast рассчитывает общую broadcast-форму для двух shape
+    #
+    # Правила:
+    # - Если число размерностей не совпадает, меньшую форму дополняем единицами слева.
+    # - Для каждой размерности справа налево: 
+    #   - Если размерности совпадают, берём это значение.
+    #   - Если одно из двух равно 1, берём большее значение.
+    #   - Если значения и не равны, и не равны 1 — ошибка broadcasting.
+    #
+    # Пример:
+    # shape1 = (4, 1, 6)
+    # shape2 = (1, 5, 6)
+    # Дополнять не нужно, уже одинаковая длина.
+    #
+    # Результирующая форма:
+    # dim 0: max(4, 1) = 4
+    # dim 1: max(1, 5) = 5
+    # dim 2: max(6, 6) = 6
+    # → (4, 5, 6)
+    #
+    # Пример с разными длинами:
+    # shape1 = (3, 2)
+    # shape2 = (2,)
+    # Дополним shape2 слева: (1, 2)
+    # Результат: (3, 2)
+    #
+    # Несовместимый пример:
+    # shape1 = (2, 3)
+    # shape2 = (3, 4)
+    # Ошибка: по первой размерности 2 и 3, ни одно не равно 1.
+
+    # Сделать входные формы одинаковой длины, дополнив единицами слева
+    len1, len2 = len(shape1), len(shape2)
+    out = []
+    # Дополняем слева
+    shape1 = (1,) * (len2 - len1) + tuple(shape1) if len1 < len2 else tuple(shape1)
+    shape2 = (1,) * (len1 - len2) + tuple(shape2) if len2 < len1 else tuple(shape2)
+    # Теперь считаем итоговую форму
+    for s1, s2 in zip(shape1, shape2):
+        if s1 == s2 or s1 == 1 or s2 == 1:
+            out.append(max(s1, s2))
+        else:
+            raise IndexingError(f"Shapes {shape1} and {shape2} not broadcastable")
+    return tuple(out)
 
 
 def strides_from_shape(shape: UserShape) -> UserStrides:
@@ -222,8 +304,11 @@ class TensorData:
             range(len(self.shape))
         ), f"Must give a position to each dimension. Shape: {self.shape} Order: {order}"
 
-        # TODO: Implement for Task 2.1.
-        raise NotImplementedError("Need to implement for Task 2.1")
+        # Новая форма и страйды — переставляем по порядку
+        new_shape = tuple(self.shape[i] for i in order)
+        new_strides = tuple(self.strides[i] for i in order)
+        # Создаем новый объект
+        return TensorData(self._storage, new_shape, new_strides)
 
     def to_string(self) -> str:
         s = ""

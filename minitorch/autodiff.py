@@ -22,7 +22,12 @@ def central_difference(f: Any, *vals: Any, arg: int = 0, epsilon: float = 1e-6) 
     Returns:
         An approximation of $f'_i(x_0, \ldots, x_{n-1})$
     """
-    raise NotImplementedError("Need to include this file from past assignment.")
+    # Сконструируем точки x+ и x-
+    vals_p = list(vals)
+    vals_m = list(vals)
+    vals_p[arg] += epsilon / 2
+    vals_m[arg] -= epsilon / 2
+    return (f(*vals_p) - f(*vals_m)) / epsilon
 
 
 variable_count = 1
@@ -60,7 +65,19 @@ def topological_sort(variable: Variable) -> Iterable[Variable]:
     Returns:
         Non-constant Variables in topological order starting from the right.
     """
-    raise NotImplementedError("Need to include this file from past assignment.")
+    visited = set()
+    order = []
+
+    def dfs(v: Variable) -> Any:
+        if v.is_constant() or v in visited:
+            return
+        visited.add(v)
+        for parent in getattr(v, "parents", []):
+            dfs(parent)
+        order.append(v)
+
+    dfs(variable)
+    return reversed(order)  # so that rightmost (output) is first
 
 
 def backpropagate(variable: Variable, deriv: Any) -> None:
@@ -74,7 +91,19 @@ def backpropagate(variable: Variable, deriv: Any) -> None:
 
     No return. Should write to its results to the derivative values of each leaf through `accumulate_derivative`.
     """
-    raise NotImplementedError("Need to include this file from past assignment.")
+    # Dictionary for accumulating d_output for each variable
+    grads = {variable: deriv}
+
+    # Traverse nodes in topological order
+    for v in topological_sort(variable):
+        d_out = grads.get(v, 0.0)
+        if v.is_leaf():
+            v.accumulate_derivative(d_out)
+        else:
+            for parent, local_deriv in v.chain_rule(d_out):
+                if parent not in grads:
+                    grads[parent] = 0.0
+                grads[parent] += local_deriv
 
 
 @dataclass

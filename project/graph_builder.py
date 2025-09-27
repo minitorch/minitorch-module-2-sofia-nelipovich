@@ -1,5 +1,10 @@
 import networkx as nx
 
+import sys
+import os
+# Добавляем родительский каталог в sys.path
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
 import minitorch
 
 
