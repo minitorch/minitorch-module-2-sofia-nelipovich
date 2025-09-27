@@ -78,13 +78,9 @@ class Scalar:
             self.name = name
         else:
             self.name = str(self.unique_id)
+
     def __hash__(self) -> int:
         return hash(self.unique_id)
-
-    # def __eq__(self, other) -> bool:
-    #     if not isinstance(other, Scalar):
-    #         return False
-    #     return self.unique_id == other.unique_id
 
     def __repr__(self) -> str:
         return "Scalar(%f)" % self.data

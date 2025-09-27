@@ -142,11 +142,9 @@ class Tensor:
             b._type_(self.backend)
             c = b
         return c
-    def __hash__(self):
+
+    def __hash__(self) -> int:
         return id(self)
-    
-    def __eq__(self, other):
-        return self is other
 
     # Functions
     def __add__(self, b: TensorLike) -> Tensor:
@@ -171,7 +169,7 @@ class Tensor:
     def __lt__(self, b: TensorLike) -> Tensor:
         return LT.apply(self, self._ensure_tensor(b))
 
-    def __eq__(self, b: TensorLike) -> Tensor:  # type: ignore[override]
+    def __eq__(self, b: TensorLike) -> Tensor:
         return EQ.apply(self, self._ensure_tensor(b))
 
     def __gt__(self, b: TensorLike) -> Tensor:

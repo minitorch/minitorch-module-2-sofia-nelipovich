@@ -167,7 +167,6 @@ class ReLU(ScalarFunction):
         return operators.relu_back(a, d_output)
 
 
-
 class Exp(ScalarFunction):
     "Exp function"
 

@@ -45,7 +45,7 @@ class Module:
         """
         Collect all the parameters of this module and its descendents.
 
-        
+
         Returns:
             The name and `Parameter` of each ancestor parameter.
 
@@ -64,7 +64,7 @@ class Module:
     def parameters(self) -> Sequence[Parameter]:
         "Enumerate over all the parameters of this module and its descendents."
         return [p for _, p in self.named_parameters()]
-    
+
     def add_parameter(self, k: str, v: Any) -> Parameter:
         """
         Manually add a parameter. Useful helper for scalar parameters.

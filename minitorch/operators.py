@@ -32,6 +32,7 @@ from typing import Callable, Iterable, List, Any
 # $f(x) = |x - y| < 1e-2$
 
 # Task 0.1
+
 def mul(x: float, y: float) -> float:
     """
     Multiply two numbers.
@@ -369,4 +370,3 @@ def prod(xs: Iterable[float]) -> float:
         float: Product of all elements.
     """
     return float(reduce_fn(mul, xs, 1.0))
-

@@ -144,7 +144,7 @@ class Log(Function):
     def forward(ctx: Context, t1: Tensor) -> Tensor:
         ctx.save_for_backward(t1)
         return t1.f.log_map(t1)
-    
+
     @staticmethod
     def backward(ctx: Context, grad_output: Tensor) -> Tensor:
         (t1,) = ctx.saved_values
@@ -164,6 +164,7 @@ class Exp(Function):
         # d(exp(x))/dx = exp(x)
         (out,) = ctx.saved_values
         return grad_output.f.mul_zip(grad_output, out)
+
 
 class Sum(Function):
     @staticmethod
@@ -221,7 +222,7 @@ class Permute(Function):
     @staticmethod
     def forward(ctx: Context, a: Tensor, order: Tensor) -> Tensor:
         # order — это тензор, превращаем в tuple для permute
-        order = [int(order[i]) for i in range(order.size)]
+        # order_ = [int(order[i]) for i in range(order.size)]
         ctx.save_for_backward(order)
         a_new_shape = a._tensor.permute(*order)
         return minitorch.Tensor.make(a_new_shape._storage, a_new_shape.shape, a_new_shape.strides, a.backend)

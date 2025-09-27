@@ -7,7 +7,6 @@ from typing_extensions import Protocol
 
 from . import operators
 from .tensor_data import (
-    MAX_DIMS,
     broadcast_index,
     index_to_position,
     shape_broadcast,
@@ -16,7 +15,7 @@ from .tensor_data import (
 
 if TYPE_CHECKING:
     from .tensor import Tensor
-    from .tensor_data import Index, Shape, Storage, Strides
+    from .tensor_data import Shape, Storage, Strides
 
 
 class MapProto(Protocol):
@@ -27,21 +26,21 @@ class MapProto(Protocol):
 class TensorOps:
     @staticmethod
     def map(fn: Callable[[float], float]) -> MapProto:
-        pass
+        pass  # type: ignore
 
     @staticmethod
     def cmap(fn: Callable[[float], float]) -> Callable[[Tensor, Tensor], Tensor]:
-        pass
+        pass  # type: ignore
 
     @staticmethod
     def zip(fn: Callable[[float, float], float]) -> Callable[[Tensor, Tensor], Tensor]:
-        pass
+        pass  # type: ignore
 
     @staticmethod
     def reduce(
         fn: Callable[[float, float], float], start: float = 0.0
     ) -> Callable[[Tensor, int], Tensor]:
-        pass
+        pass  # type: ignore
 
     @staticmethod
     def matrix_multiply(a: Tensor, b: Tensor) -> Tensor:
@@ -90,6 +89,7 @@ class TensorBackend:
         self.mul_reduce = ops.reduce(operators.mul, 1.0)
         self.matrix_multiply = ops.matrix_multiply
         self.cuda = ops.cuda
+
 
 class SimpleOps(TensorOps):
     @staticmethod
@@ -356,18 +356,15 @@ def tensor_zip(fn: Callable[[float, float], float]) -> Any:
         # b_storage = [10, 20, 30, 40, 50, 60], b_shape = (3, 2), b_strides = (2, 1)
         # out_storage = [0, 0, 0, 0, 0, 0], out_shape = (3, 2), out_strides = (2, 1)
         # Функция: fn = lambda a, b: a + b
-        #
-        # Для out_index = (0, 0): 
+        # Для out_index = (0, 0):
         #     broadcast_index(out_index, out_shape, a_shape) → a_index = (0,)
         #     broadcast_index(out_index, out_shape, b_shape) → b_index = (0, 0)
         #     a_storage[0]=1, b_storage[0]=10 → out[0] = 11
-        #
         # Для (0,1): a_index=(1,), b_index=(0,1), a_storage[1]=2, b_storage[1]=20 → out[1]=22
         # Для (1,0): a_index=(0,), b_index=(1,0), a_storage[0]=1, b_storage[2]=30 → out[2]=31
         # Для (1,1): a_index=(1,), b_index=(1,1), a_storage[1]=2, b_storage[3]=40 → out[3]=42
         # Для (2,0): a_index=(0,), b_index=(2,0), a_storage[0]=1, b_storage[4]=50 → out[4]=51
         # Для (2,1): a_index=(1,), b_index=(2,1), a_storage[1]=2, b_storage[5]=60 → out[5]=62
-        #
         # Итог: out_storage = [11, 22, 31, 42, 51, 62]
 
         # Вычислим общий размер выходного тензора
