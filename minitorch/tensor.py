@@ -143,6 +143,9 @@ class Tensor:
             c = b
         return c
 
+    def __hash__(self) -> int:
+        return id(self)
+
     # Functions
     def __add__(self, b: TensorLike) -> Tensor:
         return Add.apply(self, self._ensure_tensor(b))
